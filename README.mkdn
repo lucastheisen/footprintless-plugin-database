@@ -1,0 +1,49 @@
+# NAME
+
+Footprintless::Database::DatabasePlugin - A Footprintless plugin for working with databases
+
+# VERSION
+
+version 0.01
+
+# DESCRIPTION
+
+Provides the `db` factory method to the framework as well as the `db` command to
+the CLI.
+
+# METHODS
+
+## db($footprintless, $coordinate, %options)
+
+Returns a new database provider instance.  See 
+[Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider).
+
+## db\_command\_helper()
+
+Returns a new command helper for the db command. See 
+[Footprintless::Database::DefaultCommandHelper](https://metacpan.org/pod/Footprintless::Database::DefaultCommandHelper).
+
+# AUTHOR
+
+Lucas Theisen &lt;lucastheisen@pastdev.com>
+
+# COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2016 by Lucas Theisen.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+# SEE ALSO
+
+Please see those modules/websites for more information related to this module.
+
+- [DBI](https://metacpan.org/pod/DBI)
+- [Footprintless](https://metacpan.org/pod/Footprintless)
+- [Footprintless::MixableBase](https://metacpan.org/pod/Footprintless::MixableBase)
+- [Footprintless::Database::DatabasePlugin](https://metacpan.org/pod/Footprintless::Database::DatabasePlugin)
+- [Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider)
+- [Footprintless::Database::CsvProvider](https://metacpan.org/pod/Footprintless::Database::CsvProvider)
+- [Footprintless::Database::DefaultCommandHelper](https://metacpan.org/pod/Footprintless::Database::DefaultCommandHelper)
+- [Footprintless::Database::MySqlProvider](https://metacpan.org/pod/Footprintless::Database::MySqlProvider)
+- [Footprintless::Database::PostgreSqlProvider](https://metacpan.org/pod/Footprintless::Database::PostgreSqlProvider)
