@@ -5,7 +5,9 @@ package Footprintless::Database::DefaultCommandHelper;
 
 # ABSTRACT: The default implementation of command helper for db
 # PODNAME: Footprintless::Database::DefaultCommandHelper
-#
+
+use Carp;
+
 sub new {
     return bless({}, shift)->_init(@_);
 }
@@ -31,7 +33,7 @@ sub post_restore {
     my ($self, $from_coordinate, $to_coordinate) = @_;
     my $file;
     eval {
-        $file = locate_file("$from_coordinate-$to_coordinate.sql");
+        $file = $self->locate_file("$from_coordinate-$to_coordinate.sql");
     };
     return $file;
 }

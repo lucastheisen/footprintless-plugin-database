@@ -15,9 +15,9 @@ use Log::Any;
 my $logger = Log::Any->get_logger();
 
 sub execute {
-    my ($self, $footprintless, $coordinate, $opts, $args) = @_;
+    my ($self, $opts, $args) = @_;
 
-    $logger->debugf('options=%s', $opts);
+    $logger->info('Performing backup...');
     eval {
         $self->{db}->connect();
         $self->{db}->backup(
@@ -27,8 +27,7 @@ sub execute {
     my $error = $@;
     $self->{db}->disconnect();
     die($error) if ($error);
-
-    $logger->info('Done...');
+    $logger->info('Done!');
 }
 
 sub opt_spec {
@@ -41,13 +40,17 @@ sub opt_spec {
     );
 }
 
+sub usage_desc {
+    return 'fpl db DB_COORD backup %o';
+}
+
 sub validate_args {
-    my ($self, $footprintless, $coordinate, $opts, $args) = @_;
+    my ($self, $opts, $args) = @_;
 
     eval {
-        $self->{db} = $footprintless->db($coordinate);
+        $self->{db} = $self->{footprintless}->db($self->{coordinate});
     };
-    croak("invalid coordinate [$coordinate]: $@") if ($@);
+    croak("invalid coordinate [$self->{coordinate}]: $@") if ($@);
 }
 
 1;

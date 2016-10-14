@@ -15,9 +15,9 @@ use Log::Any;
 my $logger = Log::Any->get_logger();
 
 sub execute {
-    my ($self, $footprintless, $coordinate, $opts, $args) = @_;
+    my ($self, $opts, $args) = @_;
 
-    $logger->debugf('options=%s', $opts);
+    $logger->info('Performing restore...');
     eval {
         $self->{db}->connect();
         $self->{db}->restore(
@@ -27,7 +27,6 @@ sub execute {
     my $error = $@;
     $self->{db}->disconnect();
     die($error) if ($error);
-
     $logger->info('Done...');
 }
 
@@ -40,18 +39,22 @@ sub opt_spec {
     );
 }
 
-sub validate_args {
-    my ($self, $footprintless, $coordinate, $opts, $args) = @_;
+sub usage_desc {
+    return 'fpl db DB_COORD restore %o';
+}
 
-    my $command_helper = $footprintless->db_command_helper();
-    croak("destination [$coordinate] not allowed")
+sub validate_args {
+    my ($self, $opts, $args) = @_;
+
+    my $command_helper = $self->{footprintless}->db_command_helper();
+    croak("destination [$self->{coordinate}] not allowed")
         unless $opts->{ignore_deny} 
-            || $command_helper->allowed_destination($coordinate);
+            || $command_helper->allowed_destination($self->{coordinate});
 
     eval {
-        $self->{db} = $footprintless->db($coordinate);
+        $self->{db} = $self->{footprintless}->db($self->{coordinate});
     };
-    croak("invalid coordinate [$coordinate]: $@") if ($@);
+    croak("invalid coordinate [$self->{coordinate}]: $@") if ($@);
 }
 
 1;

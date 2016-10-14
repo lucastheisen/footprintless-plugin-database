@@ -4,7 +4,7 @@ use warnings;
 package Footprintless::Database::MySqlProvider;
 
 # ABSTRACT: A MySql provider implementation
-# PODNAME: Footprintless::Database::AbstractProvider
+# PODNAME: Footprintless::Database::MySqlProvider
 
 use parent qw(Footprintless::Database::AbstractProvider);
 
@@ -57,7 +57,7 @@ sub backup {
     
     my $command = $self->_dump_command(%options);
 
-    if (eval {$to->isa('Footprintless::Database::MySql')}) {
+    if (eval {$to->isa('Footprintless::Database::MySqlProvider')}) {
         $to->restore($self,
             'clean' => $options{clean},
             'backup' => {
@@ -293,7 +293,8 @@ sub _dump_command {
 }
 
 sub _init {
-    my ($self, $factory, $coordinate, %options) = @_;
+    my ($self, %options) = @_;
+    $self->Footprintless::Database::AbstractProvider::_init(%options);
 
     $self->{port} = 3306 unless ($self->{port});
 
@@ -343,7 +344,7 @@ sub restore {
 
     my $command = $self->_client_command('mysql');
     
-    if (eval {$from->isa('Footprintless::Database::MySql')}) {
+    if (eval {$from->isa('Footprintless::Database::MySqlProvider')}) {
         $logger->debug('Restoring from another mysql instance');
         $self->_run_or_die( 
             pipe_command( 

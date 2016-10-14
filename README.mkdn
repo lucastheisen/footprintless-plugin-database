@@ -25,7 +25,7 @@ Returns a new command helper for the db command. See
 
 # AUTHOR
 
-Lucas Theisen &lt;lucastheisen@pastdev.com>
+Lucas Theisen <lucastheisen@pastdev.com>
 
 # COPYRIGHT AND LICENSE
 

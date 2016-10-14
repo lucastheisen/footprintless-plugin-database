@@ -15,9 +15,9 @@ use Log::Any;
 my $logger = Log::Any->get_logger();
 
 sub execute {
-    my ($self, $footprintless, $coordinate, $opts, $args) = @_;
+    my ($self, $opts, $args) = @_;
 
-    $logger->debugf('options=%s', $opts);
+    $logger->info('Performing copy...');
     eval {
         $self->{db}->connect();
         $self->{destination_db}->connect();
@@ -29,8 +29,7 @@ sub execute {
     $self->{db}->disconnect();
     $self->{destination_db}->disconnect();
     die($error) if ($error);
-
-    $logger->info('Done...');
+    $logger->info('Done!');
 }
 
 sub opt_spec {
@@ -47,28 +46,34 @@ sub opt_spec {
     );
 }
 
+sub usage_desc {
+    return 'fpl db DB_COORD copy-to DB_COORD %o';
+}
+
 sub validate_args {
-    my ($self, $footprintless, $coordinate, $opts, $args) = @_;
+    my ($self, $opts, $args) = @_;
 
-    eval {
-        $self->{db} = $footprintless->db($coordinate);
-    };
-    croak("invalid coordinate [$coordinate]: $@") if ($@);
-
-    my $command_helper = $footprintless->db_command_helper();
+    my $command_helper = $self->{footprintless}->db_command_helper();
     my ($destination_coordinate) = @$args;
+    $self->usage_error('destination coordinate required for copy') 
+        unless ($destination_coordinate);
     croak("destination [$destination_coordinate] not allowed")
         unless $opts->{ignore_deny} 
             || $command_helper->allowed_destination($destination_coordinate);
-    $self->usage_error('destination coordinate required for copy') 
-    unless ($destination_coordinate);
+
     eval {
-        $self->{destination_db} = $footprintless->db($destination_coordinate);
+        $self->{db} = $self->{footprintless}->db($self->{coordinate});
+    };
+    croak("invalid coordinate [$self->{coordinate}]: $@") if ($@);
+
+    eval {
+        $self->{destination_db} = $self->{footprintless}
+            ->db($destination_coordinate);
     };
     croak("invalid destination coordinate [$destination_coordinate]: $@") if ($@);
 
     $self->{post_restore} = $command_helper->post_restore(
-        $coordinate, $destination_coordinate);
+        $self->{coordinate}, $destination_coordinate);
 }
 
 1;
