@@ -9,7 +9,7 @@ package Footprintless::Plugin::Database::SqlShellAdapter;
 use Exporter qw(import);
 use Footprintless::Util qw(slurp);
 use SQL::Shell;
-use Term::Readline;
+use Term::ReadLine;
 
 our @EXPORT_OK = qw(
     sql_shell
