@@ -1,10 +1,10 @@
 # NAME
 
-Footprintless::Database::DatabasePlugin - A Footprintless plugin for working with databases
+Footprintless::Plugin::Database - A Footprintless plugin for working with databases
 
 # VERSION
 
-version 0.01
+version 1.00
 
 # DESCRIPTION
 
@@ -17,20 +17,20 @@ As with all plugins, this must be registered on the `footprintless` entity.
 Also, it is necessary to specify the providers you want made available:
 
     plugins => [
-        'Footprintless::Database::DatabasePlugin',
+        'Footprintless::Plugin::Database',
     ],
-    'Footprintless::Database::DatabasePlugin' => {
+    'Footprintless::Plugin::Database' => {
         providers => {
-            csv => 'Footprintless::Database::CsvProvider',
-            mysql => 'Footprintless::Database::MySqlProvider',
-            postres => 'Footprintless::Database::PostgreSqlProvider',
+            csv => 'Footprintless::Plugin::Database::CsvProvider',
+            mysql => 'Footprintless::Plugin::Database::MySqlProvider',
+            postres => 'Footprintless::Plugin::Database::PostgreSqlProvider',
         }
     }
 
 You may supply your own providers given thaty the implement they interface 
-outlined by [Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider):
+outlined by [Footprintless::Plugin::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::AbstractProvider):
 
-    'Footprintless::Database::DatabasePlugin' => {
+    'Footprintless::Plugin::Database' => {
         providers => {
             db2 => 'My::Database::Db2Provider',
         }
@@ -39,17 +39,17 @@ outlined by [Footprintless::Database::AbstractProvider](https://metacpan.org/pod
 Additional configuration is supported for specifying a default provider and a
 custom command helper implementation class:
 
-    'Footprintless::Database::DatabasePlugin' => {
+    'Footprintless::Plugin::Database' => {
         command_helper => 'My::Automation::CommandHelper',
         default_provider => 'mysql'
         providers => {
-            csv => 'Footprintless::Database::CsvProvider',
-            mysql => 'Footprintless::Database::MySqlProvider',
-            postres => 'Footprintless::Database::PostgreSqlProvider',
+            csv => 'Footprintless::Plugin::Database::CsvProvider',
+            mysql => 'Footprintless::Plugin::Database::MySqlProvider',
+            postres => 'Footprintless::Plugin::Database::PostgreSqlProvider',
         }
     }
 
-See ["ENTITIES" in Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider#ENTITIES) for example 
+See ["ENTITIES" in Footprintless::Plugin::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::AbstractProvider#ENTITIES) for example 
 database entity configuration.
 
 # METHODS
@@ -57,12 +57,12 @@ database entity configuration.
 ## db($footprintless, $coordinate, %options)
 
 Returns a new database provider instance.  See 
-[Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider).
+[Footprintless::Plugin::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::AbstractProvider).
 
 ## db\_command\_helper()
 
 Returns a new command helper for the db command. See 
-[Footprintless::Database::DefaultCommandHelper](https://metacpan.org/pod/Footprintless::Database::DefaultCommandHelper).
+[Footprintless::Plugin::Database::DefaultCommandHelper](https://metacpan.org/pod/Footprintless::Plugin::Database::DefaultCommandHelper).
 
 # AUTHOR
 
@@ -82,9 +82,9 @@ Please see those modules/websites for more information related to this module.
 - [DBI](https://metacpan.org/pod/DBI)
 - [Footprintless](https://metacpan.org/pod/Footprintless)
 - [Footprintless::MixableBase](https://metacpan.org/pod/Footprintless::MixableBase)
-- [Footprintless::Database::DatabasePlugin](https://metacpan.org/pod/Footprintless::Database::DatabasePlugin)
-- [Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider)
-- [Footprintless::Database::CsvProvider](https://metacpan.org/pod/Footprintless::Database::CsvProvider)
-- [Footprintless::Database::DefaultCommandHelper](https://metacpan.org/pod/Footprintless::Database::DefaultCommandHelper)
-- [Footprintless::Database::MySqlProvider](https://metacpan.org/pod/Footprintless::Database::MySqlProvider)
-- [Footprintless::Database::PostgreSqlProvider](https://metacpan.org/pod/Footprintless::Database::PostgreSqlProvider)
+- [Footprintless::Plugin::Database](https://metacpan.org/pod/Footprintless::Plugin::Database)
+- [Footprintless::Plugin::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::AbstractProvider)
+- [Footprintless::Plugin::Database::CsvProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::CsvProvider)
+- [Footprintless::Plugin::Database::DefaultCommandHelper](https://metacpan.org/pod/Footprintless::Plugin::Database::DefaultCommandHelper)
+- [Footprintless::Plugin::Database::MySqlProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::MySqlProvider)
+- [Footprintless::Plugin::Database::PostgreSqlProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::PostgreSqlProvider)
