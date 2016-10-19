@@ -1,12 +1,12 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::MySqlProvider;
+package Footprintless::Plugin::Database::MySqlProvider;
 
 # ABSTRACT: A MySql provider implementation
-# PODNAME: Footprintless::Database::MySqlProvider
+# PODNAME: Footprintless::Plugin::Database::MySqlProvider
 
-use parent qw(Footprintless::Database::AbstractProvider);
+use parent qw(Footprintless::Plugin::Database::AbstractProvider);
 
 use overload q{""} => 'to_string', fallback => 1;
 
@@ -57,7 +57,7 @@ sub backup {
     
     my $command = $self->_dump_command(%options);
 
-    if (eval {$to->isa('Footprintless::Database::MySqlProvider')}) {
+    if (eval {$to->isa('Footprintless::Plugin::Database::MySqlProvider')}) {
         $to->restore($self,
             'clean' => $options{clean},
             'backup' => {
@@ -294,7 +294,7 @@ sub _dump_command {
 
 sub _init {
     my ($self, %options) = @_;
-    $self->Footprintless::Database::AbstractProvider::_init(%options);
+    $self->Footprintless::Plugin::Database::AbstractProvider::_init(%options);
 
     $self->{port} = 3306 unless ($self->{port});
 
@@ -344,7 +344,7 @@ sub restore {
 
     my $command = $self->_client_command('mysql');
     
-    if (eval {$from->isa('Footprintless::Database::MySqlProvider')}) {
+    if (eval {$from->isa('Footprintless::Plugin::Database::MySqlProvider')}) {
         $logger->debug('Restoring from another mysql instance');
         $self->_run_or_die( 
             pipe_command( 

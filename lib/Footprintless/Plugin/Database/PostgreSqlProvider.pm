@@ -1,12 +1,12 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::PostgreSqlProvider;
+package Footprintless::Plugin::Database::PostgreSqlProvider;
 
 # ABSTRACT: A PostgreSql provider implementation
-# PODNAME: Footprintless::Database::AbstractProvider
+# PODNAME: Footprintless::Plugin::Database::AbstractProvider
 
-use parent qw(Footprintless::Database::AbstractProvider);
+use parent qw(Footprintless::Plugin::Database::AbstractProvider);
 
 use overload q{""} => 'to_string', fallback => 1;
 
@@ -57,7 +57,7 @@ sub backup {
     
     my $command = $self->_dump_command(%options);
 
-    if (eval{$to->isa('Footprintless::Database::PostgreSQL')}) {
+    if (eval{$to->isa('Footprintless::Plugin::Database::PostgreSqlProvider')}) {
         $to->restore($self,
             'clean' => $options{clean},
             'backup' => {
@@ -107,7 +107,40 @@ sub _client_command {
 }
 
 sub client {
-    die("not yet implemented");
+    my ($self, %options) = @_;
+
+    my $in_file;
+    eval {
+        my $in_handle = delete( $options{in_handle} );
+        if ( $options{in_file} ) {
+            open( $in_file, '<', delete( $options{in_file} ) )
+                || croak( "invalid in_file: $!" );
+        }
+        if ( $options{in_string} ) {
+            my $string = delete( $options{in_string} );
+            open( $in_file, '<', \$string )
+                || croak( "invalid in_string: $!" );
+        }
+        $self->_connect_tunnel();
+        
+        my $command = $self->_client_command('psql', 
+            $self->{database},
+            @{$options{client_options}} );
+        $self->_run_or_die( 
+            $command,
+            {
+                in_handle => $in_file || $in_handle || \*STDIN,
+                out_handle => \*STDOUT,
+                err_handle => \*STDERR
+            } );
+    };
+    my $error = $@;
+    $self->disconnect();
+    if ( $in_file ) {
+        close( $in_file );
+    }
+
+    croak( $error ) if ( $error );
 }
 
 sub _cnf {
@@ -161,8 +194,10 @@ sub _dump_command {
             });
     
         $dump_command = pipe_command(
-            $self->_client_command(
-                'pg_dump', $self->{database}, '--create', '--clean'),
+            $self->_client_command('pg_dump', 
+                $self->{database}, 
+                '--create', 
+                '--clean'),
             "pv -f " . ($size ? "-s $size" : "-b"));
     }
     else {
@@ -178,7 +213,7 @@ sub _dump_command {
 
 sub _init {
     my ($self, %options) = @_;
-    $logger->warn('postgresql has not been thoroughly tested!!!');
+    $self->Footprintless::Plugin::Database::AbstractProvider::_init(%options);
 
     $self->{port} = 5432 unless ($self->{port});
 
@@ -235,7 +270,7 @@ sub restore {
 
     my $command = $self->_client_command('psql', $self->{database});
     
-    if (eval {$from->isa( 'ASIAS::PostgreSQL')}) {
+    if (eval {$from->isa( 'Footprintless::Plugin::Database::PostgreSqlProvider')}) {
         $logger->debug("Restoring from another postgres instance");
         $self->_run_or_die( 
             pipe_command( 

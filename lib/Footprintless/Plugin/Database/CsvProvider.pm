@@ -1,12 +1,12 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::CsvProvider;
+package Footprintless::Plugin::Database::CsvProvider;
 
 # ABSTRACT: A CSV file provider implementation
-# PODNAME: Footprintless::Database::CsvProvider
+# PODNAME: Footprintless::Plugin::Database::CsvProvider
 
-use parent qw(Footprintless::Database::AbstractProvider);
+use parent qw(Footprintless::Plugin::Database::AbstractProvider);
 
 use overload q{""} => 'to_string', fallback => 1;
 
@@ -30,7 +30,7 @@ sub _connection_string {
 
 sub _init {
     my ($self, %options) = @_;
-    $self->Footprintless::Database::AbstractProvider::_init(%options);
+    $self->Footprintless::Plugin::Database::AbstractProvider::_init(%options);
 
     my $entity = $self->_entity($self->{coordinate});
     

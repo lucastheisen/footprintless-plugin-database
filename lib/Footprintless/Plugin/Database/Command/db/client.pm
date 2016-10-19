@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::DatabasePlugin::Command::db::client;
+package Footprintless::Plugin::Database::Command::db::client;
 
 # ABSTRACT: start a command line client
-# PODNAME: Footprintless::Database::DatabasePlugin::Command::db::client
+# PODNAME: Footprintless::Plugin::Database::Command::db::client
 
 use parent qw(Footprintless::App::Action);
 

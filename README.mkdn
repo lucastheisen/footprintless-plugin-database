@@ -11,6 +11,47 @@ version 0.01
 Provides the `db` factory method to the framework as well as the `db` command to
 the CLI.
 
+# ENTITIES
+
+As with all plugins, this must be registered on the `footprintless` entity.  
+Also, it is necessary to specify the providers you want made available:
+
+    plugins => [
+        'Footprintless::Database::DatabasePlugin',
+    ],
+    'Footprintless::Database::DatabasePlugin' => {
+        providers => {
+            csv => 'Footprintless::Database::CsvProvider',
+            mysql => 'Footprintless::Database::MySqlProvider',
+            postres => 'Footprintless::Database::PostgreSqlProvider',
+        }
+    }
+
+You may supply your own providers given thaty the implement they interface 
+outlined by [Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider):
+
+    'Footprintless::Database::DatabasePlugin' => {
+        providers => {
+            db2 => 'My::Database::Db2Provider',
+        }
+    }
+
+Additional configuration is supported for specifying a default provider and a
+custom command helper implementation class:
+
+    'Footprintless::Database::DatabasePlugin' => {
+        command_helper => 'My::Automation::CommandHelper',
+        default_provider => 'mysql'
+        providers => {
+            csv => 'Footprintless::Database::CsvProvider',
+            mysql => 'Footprintless::Database::MySqlProvider',
+            postres => 'Footprintless::Database::PostgreSqlProvider',
+        }
+    }
+
+See ["ENTITIES" in Footprintless::Database::AbstractProvider](https://metacpan.org/pod/Footprintless::Database::AbstractProvider#ENTITIES) for example 
+database entity configuration.
+
 # METHODS
 
 ## db($footprintless, $coordinate, %options)

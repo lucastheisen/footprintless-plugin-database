@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::DefaultCommandHelper;
+package Footprintless::Plugin::Database::DefaultCommandHelper;
 
 # ABSTRACT: The default implementation of command helper for db
-# PODNAME: Footprintless::Database::DefaultCommandHelper
+# PODNAME: Footprintless::Plugin::Database::DefaultCommandHelper
 
 use Carp;
 
@@ -60,4 +60,4 @@ Returns the path to a sql script file that should be run after a restore.
 
 =head1 SEE ALSO
 
-Footprintless::Database::DatabasePlugin
+Footprintless::Plugin::Database

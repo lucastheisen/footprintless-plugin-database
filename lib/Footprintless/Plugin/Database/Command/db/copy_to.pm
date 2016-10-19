@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::DatabasePlugin::Command::db::copy_to;
+package Footprintless::Plugin::Database::Command::db::copy_to;
 
 # ABSTRACT: copy's the database to the specified destination
-# PODNAME: Footprintless::Database::DatabasePlugin::Command::db::copy_to
+# PODNAME: Footprintless::Plugin::Database::Command::db::copy_to
 
 use parent qw(Footprintless::App::Action);
 
@@ -22,7 +22,7 @@ sub execute {
         $self->{db}->connect();
         $self->{destination_db}->connect();
 
-        $self->{db}->backup($self->{destination_db}, %$opts,
+        $self->{db}->backup($self->{destination_db}, %{$self->{options}},
             post_restore => $self->{post_restore});
     };
     my $error = $@;
@@ -35,7 +35,6 @@ sub execute {
 sub opt_spec {
     return (
         ['clean', 'drop all data on the target before restoring'],
-        ['file=s', 'the output file'],
         ['ignore-all-views', 'will ignore all views'],
         ['ignore-deny', 'will allow running on denied coordinates'],
         ['ignore-table=s@', 'will ignore the specified table'],
@@ -71,6 +70,16 @@ sub validate_args {
             ->db($destination_coordinate);
     };
     croak("invalid destination coordinate [$destination_coordinate]: $@") if ($@);
+
+    $self->{options} = {
+        clean => $opts->{clean},
+        ignore_all_views => $opts->{ignore_all_views},
+        ($opts->{ignore_table} ? (ignore_tables => $opts->{ignore_table}) : ()),
+        live => $opts->{live},
+        ($opts->{only_table} ? (only_tables => $opts->{only_table}) : ()),
+        single_transaction => $opts->{single_transaction},
+        ($opts->{where} ? (where => $opts->{where}) : ()),
+    };
 
     $self->{post_restore} = $command_helper->post_restore(
         $self->{coordinate}, $destination_coordinate);

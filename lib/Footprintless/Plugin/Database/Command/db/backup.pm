@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::DatabasePlugin::Command::db::backup;
+package Footprintless::Plugin::Database::Command::db::backup;
 
 # ABSTRACT: creates a backup of the database
-# PODNAME: Footprintless::Database::DatabasePlugin::Command::db::backup
+# PODNAME: Footprintless::Plugin::Database::Command::db::backup
 
 use parent qw(Footprintless::App::Action);
 
@@ -20,9 +20,7 @@ sub execute {
     $logger->info('Performing backup...');
     eval {
         $self->{db}->connect();
-        $self->{db}->backup(
-            (delete($opts->{file}) || \*STDOUT), 
-            %$opts);
+        $self->{db}->backup($self->{file}, %{$self->{options}});
     };
     my $error = $@;
     $self->{db}->disconnect();
@@ -51,6 +49,15 @@ sub validate_args {
         $self->{db} = $self->{footprintless}->db($self->{coordinate});
     };
     croak("invalid coordinate [$self->{coordinate}]: $@") if ($@);
+
+    $self->{file} = $opts->{file} || \*STDOUT;
+
+    $self->{options} = {
+        ignore_all_views => $opts->{ignore_all_views},
+        ($opts->{ignore_table} ? (ignore_tables => $opts->{ignore_table}) : ()),
+        live => $opts->{live},
+        ($opts->{only_table} ? (only_tables => $opts->{only_table}) : ()),
+    };
 }
 
 1;

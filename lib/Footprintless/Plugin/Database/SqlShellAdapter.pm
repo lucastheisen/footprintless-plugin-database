@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::SqlShellAdapter;
+package Footprintless::Plugin::Database::SqlShellAdapter;
 
 # ABSTRACT: An adaptor to SQL::Shell
-# PODNAME: Footprintless::Database::SqlShellAdapter
+# PODNAME: Footprintless::Plugin::Database::SqlShellAdapter
 
 use Exporter qw(import);
 use Footprintless::Util qw(slurp);
@@ -152,7 +152,7 @@ __END__
 =head1 SYNOPSIS
 
     # Standard way of getting an overlay
-    use Footprintless::Database::SqlShellAdapter qw(sql_shell);
+    use Footprintless::Plugin::Database::SqlShellAdapter qw(sql_shell);
     sql_shell('DBI:CSV:f_dir=/tmp');
 
 =head1 DESCRIPTION
@@ -166,5 +166,5 @@ Executes the shell.
 =head1 SEE ALSO
 
 Footprintless
-Footprintless::Database::DatabasePlugin
+Footprintless::Plugin::Database
 SQL::Shell

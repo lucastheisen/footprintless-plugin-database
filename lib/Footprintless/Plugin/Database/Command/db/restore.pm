@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::DatabasePlugin::Command::db::restore;
+package Footprintless::Plugin::Database::Command::db::restore;
 
 # ABSTRACT: restore a database from a backup
-# PODNAME: Footprintless::Database::DatabasePlugin::Command::db::restore
+# PODNAME: Footprintless::Plugin::Database::Command::db::restore
 
 use parent qw(Footprintless::App::Action);
 

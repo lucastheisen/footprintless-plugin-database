@@ -1,10 +1,10 @@
 use strict;
 use warnings;
 
-package Footprintless::Database::AbstractProvider;
+package Footprintless::Plugin::Database::AbstractProvider;
 
 # ABSTRACT: A base class for database providers
-# PODNAME: Footprintless::Database::AbstractProvider
+# PODNAME: Footprintless::Plugin::Database::AbstractProvider
 
 use parent qw(Footprintless::MixableBase);
 
@@ -52,8 +52,8 @@ sub client {
         my $local_in = $in_handle || $in_file;
         local (*STDIN) = $local_in if ($local_in);
 
-        require Footprintless::Database::SqlShellAdapter;
-        Footprintless::Database::SqlShellAdapter::sql_shell(
+        require Footprintless::Plugin::Database::SqlShellAdapter;
+        Footprintless::Plugin::Database::SqlShellAdapter::sql_shell(
             $self->_connection_string(), 
             $self->{username}, 
             $self->{password}, 
@@ -182,6 +182,7 @@ sub _init {
     my $entity = $self->_entity($self->{coordinate});
 
     $self->{backup} = $entity->{backup};
+    $self->{database} = $entity->{database};
     $self->{hostname} = $entity->{hostname} || 'localhost';
     $self->{password} = $entity->{password};
     $self->{port} = $entity->{port};
@@ -481,7 +482,7 @@ Rolls back the current transaction.
 DBI
 Footprintless
 Footprintless::MixableBase
-Footprintless::Database::DatabasePlugin
-Footprintless::Database::CsvProvider
-Footprintless::Database::MySqlProvider
-Footprintless::Database::PostgreSqlProvider
+Footprintless::Plugin::Database
+Footprintless::Plugin::Database::CsvProvider
+Footprintless::Plugin::Database::MySqlProvider
+Footprintless::Plugin::Database::PostgreSqlProvider

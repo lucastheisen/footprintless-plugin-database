@@ -15,9 +15,9 @@ use Footprintless::Util qw(
     temp_dir
 );
 
-BEGIN {use_ok('Footprintless::Database::AbstractProvider')}
-BEGIN {use_ok('Footprintless::Database::DatabasePlugin')}
-BEGIN {use_ok('Footprintless::Database::DatabasePlugin::Command::db')}
+BEGIN {use_ok('Footprintless::Plugin::Database::AbstractProvider')}
+BEGIN {use_ok('Footprintless::Plugin::Database')}
+BEGIN {use_ok('Footprintless::Plugin::Database::Command::db')}
 
 eval {
     require Getopt::Long;
@@ -48,12 +48,12 @@ sub csv_db {
     my $fpl = factory({
         footprintless => {
             plugins => [
-                'Footprintless::Database::DatabasePlugin'
+                'Footprintless::Plugin::Database'
             ],
-            'Footprintless::Database::DatabasePlugin' => {
+            'Footprintless::Plugin::Database' => {
                 default_provider => 'csv',
                 providers => {
-                    csv => 'Footprintless::Database::CsvProvider'
+                    csv => 'Footprintless::Plugin::Database::CsvProvider'
                 }
             }
         },
@@ -87,12 +87,12 @@ sub write_csv {
     my $fpl = factory({
         footprintless => {
             plugins => [
-                'Footprintless::Database::DatabasePlugin'
+                'Footprintless::Plugin::Database'
             ],
-            'Footprintless::Database::DatabasePlugin' => {
+            'Footprintless::Plugin::Database' => {
                 default_provider => 'csv',
                 providers => {
-                    csv => 'Footprintless::Database::CsvProvider'
+                    csv => 'Footprintless::Plugin::Database::CsvProvider'
                 }
             }
         },
@@ -101,12 +101,12 @@ sub write_csv {
         invalid => {provider => 'invalid'}
     });
 
-    ok($fpl->db('default')->isa('Footprintless::Database::CsvProvider'), 
+    ok($fpl->db('default')->isa('Footprintless::Plugin::Database::CsvProvider'), 
         'got my default');
-    ok($fpl->db('csv')->isa('Footprintless::Database::CsvProvider'), 
+    ok($fpl->db('csv')->isa('Footprintless::Plugin::Database::CsvProvider'), 
         'got my csv');
     eval {
-        $fpl->db('invalid')->isa('Footprintless::Database::CsvProvider');
+        $fpl->db('invalid')->isa('Footprintless::Plugin::Database::CsvProvider');
     };
     like($@, qr/^unsupported database provider:/, 'invalid provider');
 }
