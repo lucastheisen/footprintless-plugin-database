@@ -271,7 +271,7 @@ sub _dump_command {
         my $size = int(
             $self->_run_or_die(
                 command("stat -c \"\%s\" $backup_file", $command_options),
-                { out_buffer => 1, select_timeout => 10 }));
+                {out_buffer => 1, timeout => 10}));
         
         # build the command
         $dump_command = pipe_command(
