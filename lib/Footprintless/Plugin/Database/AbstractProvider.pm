@@ -13,7 +13,7 @@ use overload q{""} => 'to_string', fallback => 1;
 use Carp;
 use DBI;
 use Footprintless::Mixins qw(
-    _entity
+  _entity
 );
 use Log::Any;
 
@@ -25,7 +25,7 @@ sub backup {
 
 sub begin_transaction {
     my ($self) = @_;
-    croak("not connected") unless ($self->{connection});
+    croak("not connected") unless ( $self->{connection} );
 
     $self->{connection}->begin_work();
 
@@ -33,31 +33,30 @@ sub begin_transaction {
 }
 
 sub client {
-    my ($self, %options) = @_;
+    my ( $self, %options ) = @_;
 
     my $in_file;
     eval {
-        my $in_handle = delete($options{in_handle});
-        if ($options{in_file}) {
-            open($in_file, '<', delete($options{in_file}))
-                || croak("invalid in_file: $!");
+        my $in_handle = delete( $options{in_handle} );
+        if ( $options{in_file} ) {
+            open( $in_file, '<', delete( $options{in_file} ) )
+              || croak("invalid in_file: $!");
         }
-        if ($options{in_string}) {
-            my $string = delete($options{in_string});
-            open($in_file, '<', \$string)
-                || croak("invalid in_string: $!");
+        if ( $options{in_string} ) {
+            my $string = delete( $options{in_string} );
+            open( $in_file, '<', \$string )
+              || croak("invalid in_string: $!");
         }
         $self->_connect_tunnel();
-        
+
         my $local_in = $in_handle || $in_file;
         local (*STDIN) = $local_in if ($local_in);
 
         require Footprintless::Plugin::Database::SqlShellAdapter;
         Footprintless::Plugin::Database::SqlShellAdapter::sql_shell(
-            $self->_connection_string(), 
-            $self->{username}, 
-            $self->{password}, 
-            @{$options{client_options}});
+            $self->_connection_string(),
+            $self->{username},
+            $self->{password}, @{ $options{client_options} } );
     };
     my $error = $@;
     $self->disconnect();
@@ -68,9 +67,32 @@ sub client {
     croak($error) if ($error);
 }
 
+sub _column_info {
+    my ( $self, $statement_handle ) = @_;
+    my $n;
+    [
+        map {
+            my $type_info =
+              $self->{connection}->type_info( $statement_handle->{TYPE}->[$_] );
+            {
+                name        => $statement_handle->{NAME}->[$_],
+                type        => $statement_handle->{TYPE}->[$_],
+                type_name   => $type_info->{TYPE_NAME},
+                type_info   => $type_info,
+                column_size => $statement_handle->{PRECISION}->[$_],
+                scale       => $statement_handle->{SCALE}->[$_],
+                nullable =>
+                  ( ( $n = $statement_handle->{NULLABLE}->[$_] ) == 2 ) ? undef
+                : $n ? 1
+                :      0,
+            }
+        } ( 0 .. $statement_handle->{NUM_OF_FIELDS} - 1 )
+    ];
+}
+
 sub commit_transaction {
     my ($self) = @_;
-    croak("not connected") unless ($self->{connection});
+    croak("not connected") unless ( $self->{connection} );
 
     $self->{connection}->commit();
 
@@ -79,40 +101,40 @@ sub commit_transaction {
 
 sub connect {
     my ($self) = @_;
-    
-    return if ($self->{connection});
-    
+
+    return if ( $self->{connection} );
+
     $self->_connect_tunnel();
 
-    my ($hostname, $port) = $self->_hostname_port();
+    my ( $hostname, $port ) = $self->_hostname_port();
 
-    $logger->debugf('connecting to %s', $self->to_string());
-    $self->{connection} = DBI->connect( 
-        $self->_connection_string(),
-        $self->{username}, 
-        $self->{password},
+    $logger->debugf( 'connecting to %s', $self->to_string() );
+    $self->{connection} = DBI->connect( $self->_connection_string(),
+        $self->{username}, $self->{password},
         { RaiseError => 1, AutoCommit => 1 } )
-        || croak("unable to connect to $hostname on port $port: $@");
+      || croak("unable to connect to $hostname on port $port: $@");
     $logger->tracef('connected');
-        
+
     return $self;
 }
 
 sub _connect_tunnel {
     my ($self) = @_;
 
-    return if ($self->{tunnel});
+    return if ( $self->{tunnel} );
 
-    if ($self->{tunnel_hostname}) {
-        $logger->debugf('opening tunnel through %s', $self->{tunnel_hostname});
-        $self->{tunnel} = $self->{factory}->tunnel($self->{coordinate},
-            destination_hostname => $self->{tunnel_destination_hostname} 
-                || $self->{hostname},
+    if ( $self->{tunnel_hostname} ) {
+        $logger->debugf( 'opening tunnel through %s',
+            $self->{tunnel_hostname} );
+        $self->{tunnel} = $self->{factory}->tunnel(
+            $self->{coordinate},
+            destination_hostname => $self->{tunnel_destination_hostname}
+              || $self->{hostname},
             destination_port => $self->{port}
         );
         $self->{tunnel}->open();
     }
-    
+
     return $self;
 }
 
@@ -128,30 +150,31 @@ sub DESTROY {
 sub disconnect {
     my ($self) = @_;
 
-    if ($self->{connection}) {
-        $logger->debugf('disconnecting from %s', $self->to_string());
+    if ( $self->{connection} ) {
+        $logger->debugf( 'disconnecting from %s', $self->to_string() );
         $self->{connection}->disconnect();
-        delete($self->{connection});
+        delete( $self->{connection} );
     }
-    
+
     if ( $self->{tunnel} ) {
         $logger->debug('closing tunnel');
         $self->{tunnel}->close();
-        delete($self->{tunnel});
+        delete( $self->{tunnel} );
     }
-        
+
     return $self;
 }
 
 sub execute {
-    my ($self, $query) = @_;
+    my ( $self, $query ) = @_;
 
     my $result;
     $self->_process_sql(
-        $query, 
+        $query,
         sub {
             $result = $_[1];
-        });
+        }
+    );
     return $result;
 }
 
@@ -161,58 +184,67 @@ sub get_schema {
 
 sub _hostname_port {
     my ($self) = @_;
-    
-    my ($hostname, $port);
-    if ($self->{tunnel}) {
+
+    my ( $hostname, $port );
+    if ( $self->{tunnel} ) {
         $hostname = $self->{tunnel}->get_local_hostname() || 'localhost';
         $port = $self->{tunnel}->get_local_port();
     }
     else {
         $hostname = $self->{hostname};
-        $port = $self->{port};
+        $port     = $self->{port};
     }
-    
-    return ($hostname eq 'localhost' ? '127.0.0.1' : $hostname, $port);
+
+    return ( $hostname eq 'localhost' ? '127.0.0.1' : $hostname, $port );
 }
 
-
 sub _init {
-    my ($self, %options) = @_;
+    my ( $self, %options ) = @_;
 
-    my $entity = $self->_entity($self->{coordinate});
+    my $entity = $self->_entity( $self->{coordinate} );
 
-    $self->{backup} = $entity->{backup};
+    $self->{backup}   = $entity->{backup};
     $self->{database} = $entity->{database};
     $self->{hostname} = $entity->{hostname} || 'localhost';
     $self->{password} = $entity->{password};
-    $self->{port} = $entity->{port};
-    $self->{schema} = $entity->{schema};
-    $self->{tunnel_destination_hostname} = $entity->{tunnel_destination_hostname};
+    $self->{port}     = $entity->{port};
+    $self->{schema}   = $entity->{schema};
+    $self->{tunnel_destination_hostname} =
+      $entity->{tunnel_destination_hostname};
     $self->{tunnel_hostname} = $entity->{tunnel_hostname};
     $self->{tunnel_username} = $entity->{tunnel_username};
-    $self->{username} = $entity->{username};
+    $self->{username}        = $entity->{username};
 
     return $self;
 }
 
 sub _process_sql {
-    my ($self, $query, $statement_handler) = @_;
+    my ( $self, $query, $statement_handler ) = @_;
 
-    my ($sql, $parameters) = ref($query) eq 'HASH'
-        ? ($query->{sql}, $query->{parameters})
-        : ($query);
+    my ( $sql, $parameters ) =
+      ref($query) eq 'HASH'
+      ? ( $query->{sql}, $query->{parameters} )
+      : ($query);
     eval {
-        if ($logger->is_trace()) {
-            $logger->trace("$self->{hostname}: '$sql'",
-                ($parameters
-                    ? (",[" . join( ',', @$parameters ) . "]")
-                    : '' ));
+        if ( $logger->is_trace() ) {
+            $logger->trace(
+                "$self->{hostname}: '$sql'",
+                (
+                    $parameters
+                    ? ( ",[" . join( ',', @$parameters ) . "]" )
+                    : ''
+                )
+            );
         }
         my $statement_handle = $self->{connection}->prepare_cached($sql);
-        &{$statement_handler}($statement_handle,
-            (defined($parameters)
+        &{$statement_handler}(
+            $statement_handle,
+            (
+                defined($parameters)
                 ? $statement_handle->execute(@$parameters)
-                : $statement_handle->execute()));
+                : $statement_handle->execute()
+            )
+        );
         $statement_handle->finish();
     };
     if ($@) {
@@ -221,68 +253,84 @@ sub _process_sql {
 }
 
 sub query {
-    my ($self, $query, $result_handler) = @_;
+    my ( $self, $query, $result_handler, %options ) = @_;
+    my $column_info = $options{column_info} || [];
+    my $hash = $options{hash};
 
-    $self->_process_sql($query, 
+    $self->_process_sql(
+        $query,
         sub {
-            my ($statement_handle, $execute_result) = @_;
-
-            while (my @row = $statement_handle->fetchrow_array()) {
-                &{$result_handler}( @row );
+            my ( $statement_handle, $execute_result ) = @_;
+            @$column_info = @{ $self->_column_info($statement_handle) };
+            if ( !$options{no_fetch} ) {
+                while (my @row = $statement_handle->fetchrow_array()) {
+                    @row = map { $column_info->[$_]->{name} => $row[$_] } 0..(scalar(@row)-1) if $hash;
+                    &{$result_handler}( @row );
+                }
+                # while ( my $row_ref = $hash ? $statement_handle->fetchrow_hashref() : $statement_handle->fetchrow_arrayref()) { &{$result_handler}( $hash ? (%$row_ref) : @$row_ref ); }
             }
-        });
-    return;
+        }
+    );
 }
 
 sub query_for_list {
-    my ($self, $query, $row_mapper) = @_;
-
-    my @results = ();
-    $self->query($query, 
+    my ( $self, $query, $row_mapper, %options ) =
+      ( shift, shift, ( scalar(@_) % 2 ) ? shift : undef, @_ );
+    my @results     = ();
+    my $hash        = $options{hash};
+    my $column_info = $self->query(
+        $query,
         sub {
             if ($row_mapper) {
-                push(@results, &{$row_mapper}(@_));
+                push( @results, &{$row_mapper}(@_) );
             }
             else {
-                push(@results, \@_);
+                push( @results, $hash ? {@_} : \@_ );
             }
-        });
+        },
+        %options
+    );
     return wantarray() ? @results : \@results;
 }
 
 sub query_for_map {
-    my ($self, $query, $row_mapper) = @_;
-
+    my ( $self, $query, $row_mapper, %options ) =
+      ( shift, shift, ( scalar(@_) % 2 ) ? shift : undef, @_ );
     my %results = ();
-    $self->query($query, 
+    my $hash    = $options{hash};
+    $self->query(
+        $query,
         sub {
             if ($row_mapper) {
                 my $key_value_pair = &{$row_mapper}(@_);
-                $results{$key_value_pair->[0]} = $key_value_pair->[1];
+                $results{ $key_value_pair->[0] } = $key_value_pair->[1];
             }
             else {
-                $results{$_[0]} = \@_;
+                $results{ $_[$hash ? 1 : 0] } = $hash ? {@_} : \@_;
             }
-        });
+        },
+        %options
+    );
     return wantarray() ? %results : \%results;
 }
 
 sub query_for_scalar {
-    my ($self, $query, $row_mapper) = @_;
-
+    my ( $self, $query, $row_mapper ) = @_;
     my $result;
-    $self->_process_sql($query, 
+    $self->_process_sql(
+        $query,
         sub {
-            my ($statement_handle, $execute_result) = @_;
-            if (my @row = $statement_handle->fetchrow_array()) {
+            my ( $statement_handle, $execute_result ) = @_;
+            if ( my @row = $statement_handle->fetchrow_array() ) {
                 if ($row_mapper) {
-                    $result = &$row_mapper( @row );
+                    $result = &$row_mapper(@row);
                 }
                 else {
                     $result = $row[0];
                 }
             }
-        });
+        }
+    );
     return $result;
 }
 
@@ -292,7 +340,7 @@ sub restore {
 
 sub rollback_transaction {
     my ($self) = @_;
-    croak("not connected") unless ($self->{connection});
+    croak("not connected") unless ( $self->{connection} );
 
     $self->{connection}->rollback();
 
@@ -301,13 +349,13 @@ sub rollback_transaction {
 
 sub to_string {
     my ($self) = @_;
-    return "{schema=>'$self->{schema}',hostname=>'$self->{hostname}',port=>$self->{port}}";
+    return
+      "{schema=>'$self->{schema}',hostname=>'$self->{hostname}',port=>$self->{port}}";
 }
 
 1;
 
 __END__
-
 =head1 SYNOPSIS
 
     my $db = $footprintless->db('dev.db');
@@ -431,27 +479,99 @@ Executes C<$query> and returns the number of rows effected.
 
 Returns the configured schema name.
 
-=method query($query, $row_handler)
+=method query($query, $row_handler, %options)
 
 Executes C<$query> and calls C<$row_handler> once for each row.  Does not return
-anything.
+anything. If you do not set the C<hash> option, the C<$row_handler> gets the 
+field data in the C<@_> array (see C<hash> option below).
 
-=method query_for_list($query, [$row_mapper])
+The following options may be set:
+      
+=over 4
+
+=item C<column_info>
+
+To get column information, set this option to an array ref - when the query is
+executed, before the C<$row_handler> is called for the first time, the array
+will be populated with the column information, the indexed by result column.
+
+Each item in the array will be a hash containing the following properties:
+
+=over 4
+
+=item C<name>
+
+The column name
+
+=item C<type>
+
+The SQL type identified by number - these are supposedly cataloged as part of
+the ISO/IEC 9075 type registry - but I would not know because this particular
+spec seems to be a particularly well guarded secret (I could not get it for
+free on the internet). I suggest looking directly at the C<type_name> and 
+C<type_info> properties instead of worrying about this.
+
+=item C<type_name>
+
+The SQL type identified by name.
+
+=item C<type_info> 
+
+A single C<type_info> hash describing the type for the column as
+described at http://search.cpan.org/~timb/DBI-1.637/DBI.pm#type_info
+
+=item C<column_size>
+
+The precision of the column. For numeric types, this is the number of digits
+(does not include sign, decimal point, or even exponent digits). For character
+based types, this is the number of bytes which may or may not correspond to
+the number of characters.
+
+=item C<scale>
+
+An integer indicating "scale" or C<undef> for types where scale is not used.
+
+=item C<nullable>
+
+Indicates whether or not we can assign this column to null - C<undef> if the
+nullability is unknown. Otherwise this may be evaluated a boolean.
+
+=back
+
+=item C<hash>
+
+Set this to a true value to get the parameters to the C<$row_handler> to be set up
+suitable for a hash assignment. The actual parameters are an array, but will
+now come as: column-name-1 => field-1, column-name-2 => field-2...
+
+=item C<no_fetch>
+
+Set this to a true value to skip the fetching of data from a result set - this is
+useful for "queries" that have no result set and would throw an exception when
+we attempt to fetch a row (i.e. C<ALTER SESSION> queries). 
+
+=back
+
+=method query_for_list($query, [$row_mapper,] %options)
 
 Executes C<$query> and calls C<$row_mapper> once for each row.  C<$row_mapper> is
 expected to return a scalar representing the row.  All of the returned scalars will
 be collected into a list and returned.  When called in list context, a list is
 returned.  In scalar context, an arrayref is returned.  If C<$row_mapper> is not
-supplied, each rows values will be returned as an arrayref.
+supplied, each rows values will be returned as an arrayref (or as hashref if the
+C<hash> option is selected). For information about the C<options>, see the 
+C<query()> method - being that they are the same options.
 
-=method query_for_map($query, $row_mapper)
+=method query_for_map($query, [$row_mapper,] %options)
 
 Executes C<$query> and calls C<$row_mapper> once for each row.  C<$row_mapper> is
 expected to return a hashref with a single key/value pair.  All of the returned 
 hashrefs will be collected into a single hash and returned.  When called in list 
 context, a hash is returned.  In scalar context, a hashref is returned.  If 
 C<$row_mapper> is not supplied, each rows values will be returned as a hashref 
-using the first value as the key, and the whole rows arrayref as the value.
+using the first value as the key, and the whole rows arrayref as the value (or
+as hashref if the C<hash> option is selected). For information about the
+C<options>, see the C<query()> method - being that they are the same options..
 
 =method query_for_scalar($query, $row_mapper)
 
