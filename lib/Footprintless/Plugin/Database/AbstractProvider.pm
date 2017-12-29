@@ -13,7 +13,7 @@ use overload q{""} => 'to_string', fallback => 1;
 use Carp;
 use DBI;
 use Footprintless::Mixins qw(
-  _entity
+    _entity
 );
 use Log::Any;
 
@@ -25,7 +25,7 @@ sub backup {
 
 sub begin_transaction {
     my ($self) = @_;
-    croak("not connected") unless ( $self->{connection} );
+    croak("not connected") unless ($self->{connection});
 
     $self->{connection}->begin_work();
 
@@ -33,30 +33,31 @@ sub begin_transaction {
 }
 
 sub client {
-    my ( $self, %options ) = @_;
+    my ($self, %options) = @_;
 
     my $in_file;
     eval {
-        my $in_handle = delete( $options{in_handle} );
-        if ( $options{in_file} ) {
-            open( $in_file, '<', delete( $options{in_file} ) )
-              || croak("invalid in_file: $!");
+        my $in_handle = delete($options{in_handle});
+        if ($options{in_file}) {
+            open($in_file, '<', delete($options{in_file}))
+                || croak("invalid in_file: $!");
         }
-        if ( $options{in_string} ) {
-            my $string = delete( $options{in_string} );
-            open( $in_file, '<', \$string )
-              || croak("invalid in_string: $!");
+        if ($options{in_string}) {
+            my $string = delete($options{in_string});
+            open($in_file, '<', \$string)
+                || croak("invalid in_string: $!");
         }
         $self->_connect_tunnel();
-
+        
         my $local_in = $in_handle || $in_file;
         local (*STDIN) = $local_in if ($local_in);
 
         require Footprintless::Plugin::Database::SqlShellAdapter;
         Footprintless::Plugin::Database::SqlShellAdapter::sql_shell(
-            $self->_connection_string(),
-            $self->{username},
-            $self->{password}, @{ $options{client_options} } );
+            $self->_connection_string(), 
+            $self->{username}, 
+            $self->{password}, 
+            @{$options{client_options}});
     };
     my $error = $@;
     $self->disconnect();
@@ -68,38 +69,25 @@ sub client {
 }
 
 sub _column_info {
-    my ( $self, $statement_handle ) = @_;
-    my $nullable;
+    my ($self, $statement_handle) = @_;
     my $column_info = [];
-    if ( defined( $statement_handle->{NUM_OF_FIELDS} ) ) {
-        $column_info = [
-            map {
+    if (defined($statement_handle->{NUM_OF_FIELDS})) {
+        $column_info = [ map {
                 my $element = {};
-                $element->{name} = $statement_handle->{NAME}->[$_]
-                  if defined( $statement_handle->{NAME} );
-                $element->{type} = $statement_handle->{TYPE}->[$_]
-                  if defined( $statement_handle->{TYPE} );
-                if ( my $type_info =
-                    $self->{connection}
-                    ->type_info( $statement_handle->{TYPE}->[$_] ) )
-                {
-                    $element->{type_name} = $type_info->{TYPE_NAME}
-                      if defined( $type_info->{TYPE_NAME} );
-                    $element->{type_info} = $type_info
-                      if defined( $type_info->{NAME} );
+                $element->{name} = $statement_handle->{NAME}->[$_] if defined($statement_handle->{NAME});
+                $element->{type} = $statement_handle->{TYPE}->[$_] if defined($statement_handle->{TYPE});
+                if (my $type_info = $self->{connection}->type_info($statement_handle->{TYPE}->[$_])) {
+                    $element->{type_name} = $type_info->{TYPE_NAME} if defined( $type_info->{TYPE_NAME} );
+                    $element->{type_info} = $type_info if defined( $type_info->{NAME} );
                 }
-                $element->{column_size} = $statement_handle->{PRECISION}->[$_]
-                  if defined( $statement_handle->{PRECISION} );
-                $element->{scale} = $statement_handle->{SCALE}->[$_]
-                  if defined( $statement_handle->{SCALE} );
-                if ( defined( $statement_handle->{NULLABLE} )
-                    && ( $nullable = $statement_handle->{NULLABLE}->[$_] ) !=
-                    2 )
-                {
+                $element->{column_size} = $statement_handle->{PRECISION}->[$_] if defined($statement_handle->{PRECISION});
+                $element->{scale} = $statement_handle->{SCALE}->[$_] if defined($statement_handle->{SCALE});
+                if (defined($statement_handle->{NULLABLE})
+                        && (my $nullable = $statement_handle->{NULLABLE}->[$_]) != 2) {
                     $element->{nullable} = $nullable ? 1 : 0;
                 }
                 $element;
-            } ( 0 .. $statement_handle->{NUM_OF_FIELDS} - 1 )
+            } 0 .. $statement_handle->{NUM_OF_FIELDS} - 1
         ];
     }
     return $column_info;
@@ -107,7 +95,7 @@ sub _column_info {
 
 sub commit_transaction {
     my ($self) = @_;
-    croak("not connected") unless ( $self->{connection} );
+    croak("not connected") unless ($self->{connection});
 
     $self->{connection}->commit();
 
@@ -116,40 +104,40 @@ sub commit_transaction {
 
 sub connect {
     my ($self) = @_;
-
-    return if ( $self->{connection} );
-
+    
+    return if ($self->{connection});
+    
     $self->_connect_tunnel();
 
-    my ( $hostname, $port ) = $self->_hostname_port();
+    my ($hostname, $port) = $self->_hostname_port();
 
-    $logger->debugf( 'connecting to %s', $self->to_string() );
-    $self->{connection} = DBI->connect( $self->_connection_string(),
-        $self->{username}, $self->{password},
+    $logger->debugf('connecting to %s', $self->to_string());
+    $self->{connection} = DBI->connect( 
+        $self->_connection_string(),
+        $self->{username}, 
+        $self->{password},
         { RaiseError => 1, AutoCommit => 1 } )
-      || croak("unable to connect to $hostname on port $port: $@");
+        || croak("unable to connect to $hostname on port $port: $@");
     $logger->tracef('connected');
-
+        
     return $self;
 }
 
 sub _connect_tunnel {
     my ($self) = @_;
 
-    return if ( $self->{tunnel} );
+    return if ($self->{tunnel});
 
-    if ( $self->{tunnel_hostname} ) {
-        $logger->debugf( 'opening tunnel through %s',
-            $self->{tunnel_hostname} );
-        $self->{tunnel} = $self->{factory}->tunnel(
-            $self->{coordinate},
-            destination_hostname => $self->{tunnel_destination_hostname}
-              || $self->{hostname},
+    if ($self->{tunnel_hostname}) {
+        $logger->debugf('opening tunnel through %s', $self->{tunnel_hostname});
+        $self->{tunnel} = $self->{factory}->tunnel($self->{coordinate},
+            destination_hostname => $self->{tunnel_destination_hostname} 
+                || $self->{hostname},
             destination_port => $self->{port}
         );
         $self->{tunnel}->open();
     }
-
+    
     return $self;
 }
 
@@ -165,31 +153,30 @@ sub DESTROY {
 sub disconnect {
     my ($self) = @_;
 
-    if ( $self->{connection} ) {
-        $logger->debugf( 'disconnecting from %s', $self->to_string() );
+    if ($self->{connection}) {
+        $logger->debugf('disconnecting from %s', $self->to_string());
         $self->{connection}->disconnect();
-        delete( $self->{connection} );
+        delete($self->{connection});
     }
-
+    
     if ( $self->{tunnel} ) {
         $logger->debug('closing tunnel');
         $self->{tunnel}->close();
-        delete( $self->{tunnel} );
+        delete($self->{tunnel});
     }
-
+        
     return $self;
 }
 
 sub execute {
-    my ( $self, $query ) = @_;
+    my ($self, $query) = @_;
 
     my $result;
     $self->_process_sql(
-        $query,
+        $query, 
         sub {
             $result = $_[1];
-        }
-    );
+        });
     return $result;
 }
 
@@ -199,67 +186,58 @@ sub get_schema {
 
 sub _hostname_port {
     my ($self) = @_;
-
-    my ( $hostname, $port );
-    if ( $self->{tunnel} ) {
+    
+    my ($hostname, $port);
+    if ($self->{tunnel}) {
         $hostname = $self->{tunnel}->get_local_hostname() || 'localhost';
         $port = $self->{tunnel}->get_local_port();
     }
     else {
         $hostname = $self->{hostname};
-        $port     = $self->{port};
+        $port = $self->{port};
     }
-
-    return ( $hostname eq 'localhost' ? '127.0.0.1' : $hostname, $port );
+    
+    return ($hostname eq 'localhost' ? '127.0.0.1' : $hostname, $port);
 }
 
+
 sub _init {
-    my ( $self, %options ) = @_;
+    my ($self, %options) = @_;
 
-    my $entity = $self->_entity( $self->{coordinate} );
+    my $entity = $self->_entity($self->{coordinate});
 
-    $self->{backup}   = $entity->{backup};
+    $self->{backup} = $entity->{backup};
     $self->{database} = $entity->{database};
     $self->{hostname} = $entity->{hostname} || 'localhost';
     $self->{password} = $entity->{password};
-    $self->{port}     = $entity->{port};
-    $self->{schema}   = $entity->{schema};
-    $self->{tunnel_destination_hostname} =
-      $entity->{tunnel_destination_hostname};
+    $self->{port} = $entity->{port};
+    $self->{schema} = $entity->{schema};
+    $self->{tunnel_destination_hostname} = $entity->{tunnel_destination_hostname};
     $self->{tunnel_hostname} = $entity->{tunnel_hostname};
     $self->{tunnel_username} = $entity->{tunnel_username};
-    $self->{username}        = $entity->{username};
+    $self->{username} = $entity->{username};
 
     return $self;
 }
 
 sub _process_sql {
-    my ( $self, $query, $statement_handler ) = @_;
+    my ($self, $query, $statement_handler) = @_;
 
-    my ( $sql, $parameters ) =
-      ref($query) eq 'HASH'
-      ? ( $query->{sql}, $query->{parameters} )
-      : ($query);
+    my ($sql, $parameters) = ref($query) eq 'HASH'
+        ? ($query->{sql}, $query->{parameters})
+        : ($query);
     eval {
-        if ( $logger->is_trace() ) {
-            $logger->trace(
-                "$self->{hostname}: '$sql'",
-                (
-                    $parameters
-                    ? ( ",[" . join( ',', @$parameters ) . "]" )
-                    : ''
-                )
-            );
+        if ($logger->is_trace()) {
+            $logger->trace("$self->{hostname}: '$sql'",
+                ($parameters
+                    ? (",[" . join( ',', @$parameters ) . "]")
+                    : '' ));
         }
         my $statement_handle = $self->{connection}->prepare_cached($sql);
-        &{$statement_handler}(
-            $statement_handle,
-            (
-                defined($parameters)
+        &{$statement_handler}($statement_handle,
+            (defined($parameters)
                 ? $statement_handle->execute(@$parameters)
-                : $statement_handle->execute()
-            )
-        );
+                : $statement_handle->execute()));
         $statement_handle->finish();
     };
     if ($@) {
@@ -268,41 +246,36 @@ sub _process_sql {
 }
 
 sub query {
-    my ( $self, $query, $result_handler, %options ) = @_;
+    my ($self, $query, $result_handler, %options) = @_;
     my $hash = $options{hash};
     my $column_info = $options{column_info} || ($hash && []);
 
-    $self->_process_sql(
-        $query,
+    $self->_process_sql($query,
         sub {
-            my ( $statement_handle, $execute_result ) = @_;
+            my ($statement_handle, $execute_result) = @_;
             @$column_info = @{ $self->_column_info($statement_handle) } if $column_info;
-            if ( !$options{no_fetch} ) {
-                while ( my @row = $statement_handle->fetchrow_array() ) {
-                    @row =
-                      map { $column_info->[$_]->{name} => $row[$_] }
-                      0 .. ( scalar(@row) - 1 )
-                      if $hash;
+            if (!$options{no_fetch}) {
+                while (my @row = $statement_handle->fetchrow_array()) {
+                    @row = map { $column_info->[$_]->{name} => $row[$_] } 0 .. ( scalar(@row) - 1 ) if $hash;
                     &{$result_handler}(@row);
                 }
             }
-        }
-    );
+        });
+    return;
 }
 
 sub query_for_list {
-    my ( $self, $query, $row_mapper, %options ) =
-      ( shift, shift, ( scalar(@_) % 2 ) ? shift : undef, @_ );
-    my @results     = ();
-    my $hash        = $options{hash};
-    my $column_info = $self->query(
-        $query,
+    my ($self, $query, $row_mapper, %options) = (shift, shift, (scalar(@_) % 2) ? shift : undef, @_);
+
+    my @results = ();
+    my $hash = $options{hash};
+    $self->query($query,
         sub {
             if ($row_mapper) {
-                push( @results, &{$row_mapper}(@_) );
+                push(@results, &{$row_mapper}(@_));
             }
             else {
-                push( @results, $hash ? {@_} : \@_ );
+                push(@results, $hash ? {@_} : \@_);
             }
         },
         %options
@@ -311,19 +284,18 @@ sub query_for_list {
 }
 
 sub query_for_map {
-    my ( $self, $query, $row_mapper, %options ) =
-      ( shift, shift, ( scalar(@_) % 2 ) ? shift : undef, @_ );
+    my ($self, $query, $row_mapper, %options) = (shift, shift, (scalar(@_) % 2) ? shift : undef, @_);
+
     my %results = ();
-    my $hash    = $options{hash};
-    $self->query(
-        $query,
+    my $hash = $options{hash};
+    $self->query($query,
         sub {
             if ($row_mapper) {
                 my $key_value_pair = &{$row_mapper}(@_);
-                $results{ $key_value_pair->[0] } = $key_value_pair->[1];
+                $results{$key_value_pair->[0]} = $key_value_pair->[1];
             }
             else {
-                $results{ $_[ $hash ? 1 : 0 ] } = $hash ? {@_} : \@_;
+                $results{$_[$hash ? 1 : 0]} = $hash ? {@_} : \@_;
             }
         },
         %options
@@ -332,22 +304,21 @@ sub query_for_map {
 }
 
 sub query_for_scalar {
-    my ( $self, $query, $row_mapper ) = @_;
+    my ($self, $query, $row_mapper) = @_;
+
     my $result;
-    $self->_process_sql(
-        $query,
+    $self->_process_sql($query, 
         sub {
-            my ( $statement_handle, $execute_result ) = @_;
-            if ( my @row = $statement_handle->fetchrow_array() ) {
+            my ($statement_handle, $execute_result) = @_;
+            if (my @row = $statement_handle->fetchrow_array()) {
                 if ($row_mapper) {
-                    $result = &$row_mapper(@row);
+                    $result = &$row_mapper( @row );
                 }
                 else {
                     $result = $row[0];
                 }
             }
-        }
-    );
+        });
     return $result;
 }
 
@@ -357,7 +328,7 @@ sub restore {
 
 sub rollback_transaction {
     my ($self) = @_;
-    croak("not connected") unless ( $self->{connection} );
+    croak("not connected") unless ($self->{connection});
 
     $self->{connection}->rollback();
 
@@ -366,9 +337,9 @@ sub rollback_transaction {
 
 sub to_string {
     my ($self) = @_;
-    return
-      "{schema=>'$self->{schema}',hostname=>'$self->{hostname}',port=>$self->{port}}";
+    return "{schema=>'$self->{schema}',hostname=>'$self->{hostname}',port=>$self->{port}}";
 }
+
 
 1;
 
