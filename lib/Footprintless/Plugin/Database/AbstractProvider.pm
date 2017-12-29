@@ -69,25 +69,40 @@ sub client {
 
 sub _column_info {
     my ( $self, $statement_handle ) = @_;
-    my $n;
-    [
-        map {
-            my $type_info =
-              $self->{connection}->type_info( $statement_handle->{TYPE}->[$_] );
-            {
-                name        => $statement_handle->{NAME}->[$_],
-                type        => $statement_handle->{TYPE}->[$_],
-                type_name   => $type_info->{TYPE_NAME},
-                type_info   => $type_info,
-                column_size => $statement_handle->{PRECISION}->[$_],
-                scale       => $statement_handle->{SCALE}->[$_],
-                nullable =>
-                  ( ( $n = $statement_handle->{NULLABLE}->[$_] ) == 2 ) ? undef
-                : $n ? 1
-                :      0,
-            }
-        } ( 0 .. $statement_handle->{NUM_OF_FIELDS} - 1 )
-    ];
+    my $nullable;
+    my $column_info = [];
+    if ( defined( $statement_handle->{NUM_OF_FIELDS} ) ) {
+        $column_info = [
+            map {
+                my $element = {};
+                $element->{name} = $statement_handle->{NAME}->[$_]
+                  if defined( $statement_handle->{NAME} );
+                $element->{type} = $statement_handle->{TYPE}->[$_]
+                  if defined( $statement_handle->{TYPE} );
+                if ( my $type_info =
+                    $self->{connection}
+                    ->type_info( $statement_handle->{TYPE}->[$_] ) )
+                {
+                    $element->{type_name} = $type_info->{TYPE_NAME}
+                      if defined( $type_info->{TYPE_NAME} );
+                    $element->{type_info} = $type_info
+                      if defined( $type_info->{NAME} );
+                }
+                $element->{column_size} = $statement_handle->{PRECISION}->[$_]
+                  if defined( $statement_handle->{PRECISION} );
+                $element->{scale} = $statement_handle->{SCALE}->[$_]
+                  if defined( $statement_handle->{SCALE} );
+                if ( defined( $statement_handle->{NULLABLE} )
+                    && ( $nullable = $statement_handle->{NULLABLE}->[$_] ) !=
+                    2 )
+                {
+                    $element->{nullable} = $nullable ? 1 : 0;
+                }
+                $element;
+            } ( 0 .. $statement_handle->{NUM_OF_FIELDS} - 1 )
+        ];
+    }
+    return $column_info;
 }
 
 sub commit_transaction {
@@ -254,20 +269,22 @@ sub _process_sql {
 
 sub query {
     my ( $self, $query, $result_handler, %options ) = @_;
-    my $column_info = $options{column_info} || [];
     my $hash = $options{hash};
+    my $column_info = $options{column_info} || ($hash && []);
 
     $self->_process_sql(
         $query,
         sub {
             my ( $statement_handle, $execute_result ) = @_;
-            @$column_info = @{ $self->_column_info($statement_handle) };
+            @$column_info = @{ $self->_column_info($statement_handle) } if $column_info;
             if ( !$options{no_fetch} ) {
-                while (my @row = $statement_handle->fetchrow_array()) {
-                    @row = map { $column_info->[$_]->{name} => $row[$_] } 0..(scalar(@row)-1) if $hash;
-                    &{$result_handler}( @row );
+                while ( my @row = $statement_handle->fetchrow_array() ) {
+                    @row =
+                      map { $column_info->[$_]->{name} => $row[$_] }
+                      0 .. ( scalar(@row) - 1 )
+                      if $hash;
+                    &{$result_handler}(@row);
                 }
-                # while ( my $row_ref = $hash ? $statement_handle->fetchrow_hashref() : $statement_handle->fetchrow_arrayref()) { &{$result_handler}( $hash ? (%$row_ref) : @$row_ref ); }
             }
         }
     );
@@ -306,7 +323,7 @@ sub query_for_map {
                 $results{ $key_value_pair->[0] } = $key_value_pair->[1];
             }
             else {
-                $results{ $_[$hash ? 1 : 0] } = $hash ? {@_} : \@_;
+                $results{ $_[ $hash ? 1 : 0 ] } = $hash ? {@_} : \@_;
             }
         },
         %options
@@ -494,8 +511,11 @@ The following options may be set:
 To get column information, set this option to an array ref - when the query is
 executed, before the C<$row_handler> is called for the first time, the array
 will be populated with the column information, the indexed by result column.
+This array may be empty if the underlying driver does not support column
+information.
 
-Each item in the array will be a hash containing the following properties:
+Each item in the array will be a hash containing the following properties if
+the driver does not support a field it will be missing:
 
 =over 4
 
