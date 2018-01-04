@@ -186,9 +186,6 @@ class allows the user to create these painful prepared statements using named
 parameters AND binding them to a context either by properties, hard-coded values,
 and/or closures.
 
-Provides a base class implementing the common abstractions.  Other providers
-should extend this class and override methods as desired.  
-
 =constructor C<new($sql_template, %bindings)>
 
 Creates the prepared statement template with the given bindings. The key of each
