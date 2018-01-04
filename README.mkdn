@@ -4,7 +4,7 @@ Footprintless::Plugin::Database - A Footprintless plugin for working with databa
 
 # VERSION
 
-version 1.02
+version 1.03
 
 # DESCRIPTION
 
@@ -87,6 +87,4 @@ Please see those modules/websites for more information related to this module.
 - [Footprintless::Plugin::Database::CsvProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::CsvProvider)
 - [Footprintless::Plugin::Database::DefaultCommandHelper](https://metacpan.org/pod/Footprintless::Plugin::Database::DefaultCommandHelper)
 - [Footprintless::Plugin::Database::MySqlProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::MySqlProvider)
-- [Footprintless::Plugin::Database::OracleProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::OracleProvider)
 - [Footprintless::Plugin::Database::PostgreSqlProvider](https://metacpan.org/pod/Footprintless::Plugin::Database::PostgreSqlProvider)
-- [Footprintless::Plugin::Database::PreparedStatementTemplate](https://metacpan.org/pod/Footprintless::Plugin::Database::PreparedStatementTemplate)
