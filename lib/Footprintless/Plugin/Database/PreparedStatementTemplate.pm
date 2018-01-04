@@ -19,17 +19,11 @@ sub _transform_binding {
     my ( $template_key, $binding ) = @_;
     my $ref = ref($binding);
     my $new_binding = { template_key => $template_key };
-    if ( my $key =
-        ( ( !$ref && $binding ) || ( $ref eq 'HASH' && $binding->{key} ) ) )
-    {
+    if ( my $key = ( ( !$ref && $binding ) || ( $ref eq 'HASH' && $binding->{key} ) ) ) {
         $new_binding->{key} = $key;
     }
-    elsif (
-        my $reference = (
-                 ( $ref eq 'SCALAR' && $binding )
-              || ( $ref eq 'HASH' && $binding->{reference} )
-        )
-      )
+    elsif ( my $reference =
+        ( ( $ref eq 'SCALAR' && $binding ) || ( $ref eq 'HASH' && $binding->{reference} ) ) )
     {
         croak(
             "Template var [$template_key] - 'reference' property of binding is not a 'SCALAR' ref"
@@ -37,26 +31,19 @@ sub _transform_binding {
         $new_binding->{reference} = $reference;
     }
     elsif ( $ref eq 'HASH' && defined( $binding->{value} ) ) {
-        croak(
-            "'Template var [$template_key] - value' property of binding is a ref"
-        ) if ref( $binding->{value} );
+        croak("'Template var [$template_key] - value' property of binding is a ref")
+            if ref( $binding->{value} );
         $new_binding->{value} = $binding->{value};
     }
-    elsif (
-        my $code = (
-                 ( $ref eq 'CODE' && $binding )
-              || ( $ref eq 'HASH' && $binding->{code} )
-        )
-      )
+    elsif ( my $code =
+        ( ( $ref eq 'CODE' && $binding ) || ( $ref eq 'HASH' && $binding->{code} ) ) )
     {
-        croak(
-            "Template var [$template_key] - 'code' property of binding is not a 'CODE' ref"
-        ) unless ref($code) eq 'CODE';
+        croak("Template var [$template_key] - 'code' property of binding is not a 'CODE' ref")
+            unless ref($code) eq 'CODE';
         $new_binding->{code} = $code;
     }
     else {
-        croak( "Template var [$template_key] - binding [%s] is invalid",
-            Dumper($binding) );
+        croak( "Template var [$template_key] - binding [%s] is invalid", Dumper($binding) );
     }
     return $new_binding;
 }
@@ -65,29 +52,27 @@ sub _bind {
     my ( $binding, $context ) = @_;
     if ( defined( my $key = $binding->{key} ) ) {
         eval { $binding->{value} = $context->$key() }
-          if ( !defined( $binding->{value} = $context->{$key} ) );
+            if ( !defined( $binding->{value} = $context->{$key} ) );
         croak(
             "Cannot bind template var [$binding->{template_key}] - property [$key] cannot be bound in context"
         ) unless defined( $binding->{value} );
     }
     elsif ( defined( my $reference = $binding->{reference} ) ) {
-        croak(
-            "Cannot bind template var [$binding->{template_key}] - reference to undefined"
-        ) unless defined( $binding->{value} = $$reference );
+        croak("Cannot bind template var [$binding->{template_key}] - reference to undefined")
+            unless defined( $binding->{value} = $$reference );
     }
     elsif ( defined( my $code = $binding->{code} ) ) {
-        croak(
-            "Cannot bind template var [$binding->{template_key}] - code returns undefined"
-        ) unless defined( $binding->{value} = $code->() );
+        croak("Cannot bind template var [$binding->{template_key}] - code returns undefined")
+            unless defined( $binding->{value} = $code->() );
     }
 }
 
 sub _unbind {
     my ($binding) = @_;
     delete( $binding->{value} )
-      if defined( $binding->{key} )
-      || defined( $binding->{reference} )
-      || defined( $binding->{code} );
+        if defined( $binding->{key} )
+        || defined( $binding->{reference} )
+        || defined( $binding->{code} );
 }
 
 sub query {
@@ -96,7 +81,7 @@ sub query {
     if ( %{ $self->{bindings} } ) {
         foreach ( values( %{ $self->{bindings} } ) ) { _bind( $_, $context ) }
         $query->{parameters} =
-          [ map { $_->{value} } @{ $self->{parameter_bindings} } ];
+            [ map { $_->{value} } @{ $self->{parameter_bindings} } ];
         foreach ( values( %{ $self->{bindings} } ) ) { _unbind( $_, $context ) }
     }
     return $query;
@@ -109,6 +94,7 @@ sub _dice {
     }
     else {
         my $add_ix = 0;
+
         # We need at least one element with a blank string in split...
         foreach ( $text ? split( /\Q$key\E/, $text, -1 ) : ('') ) {
             push( @$index_to_key, $key ) if ( $add_ix++ );
@@ -120,16 +106,16 @@ sub _dice {
 sub _init {
     my ( $self, $sql_template, %bindings ) = @_;
     my @binding_keys =
-      sort { ( length($b) <=> length($a) ) || ( $a cmp $b ) }
-      keys(%bindings);
+        sort { ( length($b) <=> length($a) ) || ( $a cmp $b ) }
+        keys(%bindings);
     my @split_text;
     my @index_to_key;
     $self->{bindings} =
-      { map { $_ => _transform_binding( $_, $bindings{$_} ) } @binding_keys };
+        { map { $_ => _transform_binding( $_, $bindings{$_} ) } @binding_keys };
     _dice( $sql_template, \@split_text, \@index_to_key, @binding_keys );
     $self->{prepared_statement} = join( '?', @split_text );
     $self->{parameter_bindings} =
-      [ map { $self->{bindings}->{$_} } @index_to_key ];
+        [ map { $self->{bindings}->{$_} } @index_to_key ];
 
     my %used_keys = map { $_ => 1 } @index_to_key;
     foreach my $unused_key ( grep { !$used_keys{$_} } @binding_keys ) {
@@ -138,7 +124,6 @@ sub _init {
     }
     return $self;
 }
-
 1;
 __END__
 =head1 SYNOPSIS
