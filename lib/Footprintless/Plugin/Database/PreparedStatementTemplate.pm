@@ -15,6 +15,44 @@ sub new {
     $self->_init(@_);
 }
 
+sub _remove_comments {
+    my ($sql) = @_;
+    my $sql_out;
+    open( my $fh, '>', \$sql_out ) || croak("Cannot write to string!");
+    my ( $in_block_comment, $in_line_comment, $in_quote ) = ( 0, 0, 0 );
+    for ( my $ix = 0; $ix < length($sql); ++$ix ) {
+        if ($in_block_comment) {
+            if ( substr( $sql, $ix, 2 ) eq '*/' ) {
+                $in_block_comment = 0;
+                ++$ix;
+            }
+        }
+        elsif ($in_line_comment) {
+            if ( substr( $sql, $ix, 1 ) eq "\n" ) {
+                $in_line_comment = 0;
+                print $fh ("\n");
+            }
+        }
+        else {
+            my $char = substr( $sql, $ix, 1 );
+            if ( !$in_quote && $char eq '/' && substr( $sql, $ix + 1, 1 ) eq '*' ) {
+                $in_block_comment = 1;
+                ++$ix;
+            }
+            elsif ( !$in_quote && $char eq '-' && substr( $sql, $ix + 1, 1 ) eq '-' ) {
+                $in_line_comment = 1;
+                ++$ix;
+            }
+            else {
+                $in_quote = !$in_quote if ( $char eq "'" );
+                print $fh ($char);
+            }
+        }
+    }
+    close $fh;
+    return $sql_out;
+}
+
 sub _transform_binding {
     my ( $template_key, $binding ) = @_;
     my $ref = ref($binding);
@@ -112,7 +150,7 @@ sub _init {
     my @index_to_key;
     $self->{bindings} =
         { map { $_ => _transform_binding( $_, $bindings{$_} ) } @binding_keys };
-    _dice( $sql_template, \@split_text, \@index_to_key, @binding_keys );
+    _dice( _remove_comments($sql_template), \@split_text, \@index_to_key, @binding_keys );
     $self->{prepared_statement} = join( '?', @split_text );
     $self->{parameter_bindings} =
         [ map { $self->{bindings}->{$_} } @index_to_key ];
