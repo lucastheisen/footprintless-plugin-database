@@ -118,7 +118,7 @@ sub _remove_comments {
             }
         }
     }
-    close $fh;
+    close($fh);
     return $sql_out;
 }
 
