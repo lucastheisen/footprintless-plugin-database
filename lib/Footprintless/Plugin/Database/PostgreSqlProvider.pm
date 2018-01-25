@@ -216,7 +216,7 @@ sub _init {
     $self->Footprintless::Plugin::Database::AbstractProvider::_init(%options);
 
     $self->{port} = 5432 unless ($self->{port});
-    $self->{schema} = 'public' unless $self->{schema};
+    $self->{schema} = 'public' unless ($self->{schema});
 
     return $self;
 }
