@@ -176,7 +176,7 @@ sub _connection_string {
         'dbname=', $self->{database}, ';',
         'host=', $hostname, ';',
         'port=', $port,
-        (@pg_options ? ("options=", join(' ', @pg_options)) : ()));
+        ( @pg_options ? ( ";options=\'", join( ' ', @pg_options ), "\'" ) : () ) );
 }
 
 sub _dump_command {
